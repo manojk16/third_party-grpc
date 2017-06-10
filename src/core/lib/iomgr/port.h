@@ -131,6 +131,20 @@
 #define GRPC_POSIX_SOCKETUTILS 1
 #define GRPC_POSIX_WAKEUP_FD 1
 #define GRPC_TIMER_USE_GENERIC 1
+#elif defined(GPR_FUCHSIA)
+#define GRPC_HAVE_IFADDRS 1
+#define GRPC_HAVE_IPV6_RECVPKTINFO 1
+#define GRPC_HAVE_IP_PKTINFO 1
+#define GRPC_HAVE_MSG_NOSIGNAL 1
+#define GRPC_HAVE_UNIX_SOCKET 1
+#define GRPC_POSIX_WAKEUP_FD 1
+// TODO(rudominer) Check that this does something we want.
+#define GRPC_POSIX_NO_SPECIAL_WAKEUP_FD 1
+#define GRPC_POSIX_SOCKET 1
+#define GRPC_POSIX_SOCKETADDR 1
+// TODO(rudominer) Check this does something we want.
+#define GRPC_POSIX_SOCKETUTILS 1
+#define GRPC_TIMER_USE_GENERIC 1
 #elif !defined(GPR_NO_AUTODETECT_PLATFORM)
 #error "Platform not recognized"
 #endif
