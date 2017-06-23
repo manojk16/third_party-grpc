@@ -135,7 +135,9 @@
 #define GRPC_HAVE_IFADDRS 1
 #define GRPC_HAVE_IPV6_RECVPKTINFO 1
 #define GRPC_HAVE_IP_PKTINFO 1
-#define GRPC_HAVE_MSG_NOSIGNAL 1
+// Magenta does not support the MSG_NOSIGNAL flag since it doesn't support
+// signals.
+#undef GRPC_HAVE_MSG_NOSIGNAL
 #define GRPC_HAVE_UNIX_SOCKET 1
 #define GRPC_POSIX_WAKEUP_FD 1
 // TODO(rudominer) Check that this does something we want.
