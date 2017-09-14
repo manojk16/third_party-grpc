@@ -34,7 +34,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
+# note(rudominer) This file is a hand-edited version of the automatically
+# generated file in the upstream repo. It is modified to work in the
+# Cobalt stand-alone build.
 
 cmake_minimum_required(VERSION 2.8)
 
@@ -131,7 +133,7 @@ if("${gRPC_CARES_PROVIDER}" STREQUAL "module")
     set(CARES_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/c-ares)
   endif()
   string(TOLOWER ${CMAKE_SYSTEM_NAME} CARES_SYSTEM_NAME)
-  set(CARES_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/cares/cares")
+  set(CARES_INCLUDE_DIR "${CARES_ROOT_DIR}")
   set(CARES_BUILD_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/cares")
   set(CARES_PLATFORM_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/cares/config_${CARES_SYSTEM_NAME}")
   if(EXISTS "${CARES_ROOT_DIR}/CMakeLists.txt")
@@ -142,9 +144,11 @@ if("${gRPC_CARES_PROVIDER}" STREQUAL "module")
       add_definitions(-DHAVE_CONFIG_H=1)
       add_definitions(-D_GNU_SOURCE=1)
     endif()
-    add_subdirectory(src/c-ares third_party/cares)
+    add_subdirectory(${CARES_ROOT_DIR} third_party/cares)
     if(TARGET cares)
         set(_gRPC_CARES_LIBRARIES cares)
+    else()
+      message(WARNING "Target cares not found.")
     endif()
   else()
     message(WARNING "gRPC_CARES_PROVIDER is \"module\" but CARES_ROOT_DIR is wrong")
@@ -201,6 +205,12 @@ elseif("${gRPC_PROTOBUF_PROVIDER}" STREQUAL "package")
     set(_gRPC_FIND_PROTOBUF "if(NOT Protobuf_FOUND)\n  find_package(Protobuf)\nendif()")
   endif()
   set(PROTOBUF_WELLKNOWN_IMPORT_DIR /usr/local/include)
+elseif("${gRPC_PROTOBUF_PROVIDER}" STREQUAL "explicit")
+  set(_gRPC_PROTOBUF_PROTOC ${gRPC_PROTOBUF_PROTOC})
+  set(_gRPC_PROTOBUF_LIBRARIES ${gRPC_PROTOBUF_LIB})
+  set(_gRPC_PROTOBUF_PROTOC_LIBRARIES ${gRPC_PROTOBUF_PROTOC_LIB} ${gRPC_PROTOBUF_FULL_LIB})
+  set(PROTOBUF_WELLKNOWN_IMPORT_DIR ${PROTOBUF_ROOT_DIR}/src)
+  link_directories(${gRPC_PROTOBUF_LIB_DIR})
 endif()
 
 if("${gRPC_SSL_PROVIDER}" STREQUAL "module")
@@ -222,6 +232,10 @@ elseif("${gRPC_SSL_PROVIDER}" STREQUAL "package")
     set(_gRPC_SSL_LIBRARIES OpenSSL::SSL)
   endif()
   set(_gRPC_FIND_SSL "if(NOT OpenSSL_FOUND)\n  find_package(OpenSSL)\nendif()")
+elseif("${gRPC_SSL_PROVIDER}" STREQUAL "explicit")
+  set(_gRPC_SSL_LIBRARIES ${gRPC_SSL_LIBRARY} ${gRPC_CRYPTO_LIBRARY})
+  link_directories(${gRPC_SSL_LIB_DIR})
+  link_directories(${gRPC_CRYPTO_LIB_DIR})
 endif()
 
 if("${gRPC_GFLAGS_PROVIDER}" STREQUAL "module")
@@ -242,6 +256,9 @@ elseif("${gRPC_GFLAGS_PROVIDER}" STREQUAL "package")
     set(_gRPC_GFLAGS_LIBRARIES gflags::gflags)
   endif()
   set(_gRPC_FIND_GFLAGS "if(NOT gflags_FOUND)\n  find_package(gflags)\nendif()")
+elseif("${gRPC_GFLAGS_PROVIDER}" STREQUAL "explicit")
+  set(_gRPC_GFLAGS_LIBRARIES gflags)
+  link_directories(${gRPC_GFLAGS_LIB_DIR})
 endif()
 
 if("${gRPC_BENCHMARK_PROVIDER}" STREQUAL "module")
@@ -4051,105 +4068,58 @@ target_link_libraries(qps
 
 endif (gRPC_BUILD_TESTS)
 
-add_library(grpc_csharp_ext SHARED
-  src/csharp/ext/grpc_csharp_ext.c
-)
-
-if(WIN32 AND MSVC)
-  set_target_properties(grpc_csharp_ext PROPERTIES COMPILE_PDB_NAME "grpc_csharp_ext"
-    COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-  )
-  if (gRPC_INSTALL)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/grpc_csharp_ext.pdb
-      DESTINATION ${CMAKE_INSTALL_LIBDIR} OPTIONAL
-    )
-  endif()
-endif()
-
-
-target_include_directories(grpc_csharp_ext
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PRIVATE ${BORINGSSL_ROOT_DIR}/include
-  PRIVATE ${PROTOBUF_ROOT_DIR}/src
-  PRIVATE ${ZLIB_INCLUDE_DIR}
-  PRIVATE ${BENCHMARK}/include
-  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/third_party/zlib
-  PRIVATE ${CARES_BUILD_INCLUDE_DIR}
-  PRIVATE ${CARES_INCLUDE_DIR}
-  PRIVATE ${CARES_PLATFORM_INCLUDE_DIR}
-  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/third_party/cares/cares
-  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/third_party/gflags/include
-)
-
-target_link_libraries(grpc_csharp_ext
-  ${_gRPC_ALLTARGETS_LIBRARIES}
-  grpc
-  gpr
-)
-
-
-
-if (gRPC_INSTALL)
-  install(TARGETS grpc_csharp_ext EXPORT gRPCTargets
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  )
-endif()
-
 if (gRPC_BUILD_TESTS)
 
 add_library(ares
-  third_party/cares/cares/ares__close_sockets.c
-  third_party/cares/cares/ares__get_hostent.c
-  third_party/cares/cares/ares__read_line.c
-  third_party/cares/cares/ares__timeval.c
-  third_party/cares/cares/ares_cancel.c
-  third_party/cares/cares/ares_create_query.c
-  third_party/cares/cares/ares_data.c
-  third_party/cares/cares/ares_destroy.c
-  third_party/cares/cares/ares_expand_name.c
-  third_party/cares/cares/ares_expand_string.c
-  third_party/cares/cares/ares_fds.c
-  third_party/cares/cares/ares_free_hostent.c
-  third_party/cares/cares/ares_free_string.c
-  third_party/cares/cares/ares_getenv.c
-  third_party/cares/cares/ares_gethostbyaddr.c
-  third_party/cares/cares/ares_gethostbyname.c
-  third_party/cares/cares/ares_getnameinfo.c
-  third_party/cares/cares/ares_getopt.c
-  third_party/cares/cares/ares_getsock.c
-  third_party/cares/cares/ares_init.c
-  third_party/cares/cares/ares_library_init.c
-  third_party/cares/cares/ares_llist.c
-  third_party/cares/cares/ares_mkquery.c
-  third_party/cares/cares/ares_nowarn.c
-  third_party/cares/cares/ares_options.c
-  third_party/cares/cares/ares_parse_a_reply.c
-  third_party/cares/cares/ares_parse_aaaa_reply.c
-  third_party/cares/cares/ares_parse_mx_reply.c
-  third_party/cares/cares/ares_parse_naptr_reply.c
-  third_party/cares/cares/ares_parse_ns_reply.c
-  third_party/cares/cares/ares_parse_ptr_reply.c
-  third_party/cares/cares/ares_parse_soa_reply.c
-  third_party/cares/cares/ares_parse_srv_reply.c
-  third_party/cares/cares/ares_parse_txt_reply.c
-  third_party/cares/cares/ares_platform.c
-  third_party/cares/cares/ares_process.c
-  third_party/cares/cares/ares_query.c
-  third_party/cares/cares/ares_search.c
-  third_party/cares/cares/ares_send.c
-  third_party/cares/cares/ares_strcasecmp.c
-  third_party/cares/cares/ares_strdup.c
-  third_party/cares/cares/ares_strerror.c
-  third_party/cares/cares/ares_timeout.c
-  third_party/cares/cares/ares_version.c
-  third_party/cares/cares/ares_writev.c
-  third_party/cares/cares/bitncmp.c
-  third_party/cares/cares/inet_net_pton.c
-  third_party/cares/cares/inet_ntop.c
-  third_party/cares/cares/windows_port.c
+  ${CARES_ROOT_DIR}/ares__close_sockets.c
+  ${CARES_ROOT_DIR}/ares__get_hostent.c
+  ${CARES_ROOT_DIR}/ares__read_line.c
+  ${CARES_ROOT_DIR}/ares__timeval.c
+  ${CARES_ROOT_DIR}/ares_cancel.c
+  ${CARES_ROOT_DIR}/ares_create_query.c
+  ${CARES_ROOT_DIR}/ares_data.c
+  ${CARES_ROOT_DIR}/ares_destroy.c
+  ${CARES_ROOT_DIR}/ares_expand_name.c
+  ${CARES_ROOT_DIR}/ares_expand_string.c
+  ${CARES_ROOT_DIR}/ares_fds.c
+  ${CARES_ROOT_DIR}/ares_free_hostent.c
+  ${CARES_ROOT_DIR}/ares_free_string.c
+  ${CARES_ROOT_DIR}/ares_getenv.c
+  ${CARES_ROOT_DIR}/ares_gethostbyaddr.c
+  ${CARES_ROOT_DIR}/ares_gethostbyname.c
+  ${CARES_ROOT_DIR}/ares_getnameinfo.c
+  ${CARES_ROOT_DIR}/ares_getopt.c
+  ${CARES_ROOT_DIR}/ares_getsock.c
+  ${CARES_ROOT_DIR}/ares_init.c
+  ${CARES_ROOT_DIR}/ares_library_init.c
+  ${CARES_ROOT_DIR}/ares_llist.c
+  ${CARES_ROOT_DIR}/ares_mkquery.c
+  ${CARES_ROOT_DIR}/ares_nowarn.c
+  ${CARES_ROOT_DIR}/ares_options.c
+  ${CARES_ROOT_DIR}/ares_parse_a_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_aaaa_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_mx_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_naptr_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_ns_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_ptr_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_soa_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_srv_reply.c
+  ${CARES_ROOT_DIR}/ares_parse_txt_reply.c
+  ${CARES_ROOT_DIR}/ares_platform.c
+  ${CARES_ROOT_DIR}/ares_process.c
+  ${CARES_ROOT_DIR}/ares_query.c
+  ${CARES_ROOT_DIR}/ares_search.c
+  ${CARES_ROOT_DIR}/ares_send.c
+  ${CARES_ROOT_DIR}/ares_strcasecmp.c
+  ${CARES_ROOT_DIR}/ares_strdup.c
+  ${CARES_ROOT_DIR}/ares_strerror.c
+  ${CARES_ROOT_DIR}/ares_timeout.c
+  ${CARES_ROOT_DIR}/ares_version.c
+  ${CARES_ROOT_DIR}/ares_writev.c
+  ${CARES_ROOT_DIR}/bitncmp.c
+  ${CARES_ROOT_DIR}/inet_net_pton.c
+  ${CARES_ROOT_DIR}/inet_ntop.c
+  ${CARES_ROOT_DIR}/windows_port.c
 )
 
 if(WIN32 AND MSVC)
