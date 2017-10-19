@@ -19,6 +19,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#############################################################
+#                NOTE TO FUCHSIA DEVELOPERS
+#
+# Do not use CMake within the Fuchsia project. This CMake file is
+# used only for the Cobalt stand-alone build, not for building
+# Cobalt's Fuchsia client, nor any other component of Fuchsia.
+#
+# See:
+# https://fuchsia.atlassian.net/projects/CB/issues/CB-61
+#############################################################
 
 # note(rudominer) This file is a hand-edited version of the automatically
 # generated file in the upstream repo. It is modified to work in the
