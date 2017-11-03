@@ -12,6 +12,7 @@ config("grpc_config") {
     ".",
     "include/",
   ]
+  cflags = [ "-Wno-unused-variable" ]
   defines = [ "GRPC_USE_PROTO_LITE" ]
 }
 
