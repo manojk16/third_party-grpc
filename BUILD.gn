@@ -12,8 +12,11 @@ config("grpc_config") {
     ".",
     "include/",
   ]
-  cflags = [ "-Wno-unused-variable" ]
   defines = [ "GRPC_USE_PROTO_LITE" ]
+}
+
+config("grpc_warnings") {
+  cflags = [ "-Wno-unused-variable" ]
 }
 
 source_set("gpr") {
@@ -797,6 +800,7 @@ source_set("grpc++") {
     "//third_party/boringssl",
     "//third_party/protobuf:protobuf_lite",
   ]
+  configs += [ ":grpc_warnings" ]
   public_configs = [ ":grpc_config" ]
 }
 
