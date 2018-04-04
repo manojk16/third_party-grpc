@@ -1,0 +1,7 @@
+Name: GRPC
+URL: https://grpc.io/
+Upstream git: https://github.com/grpc/grpc
+Description:
+
+A high-performance, open-source universal RPC framework.
+
