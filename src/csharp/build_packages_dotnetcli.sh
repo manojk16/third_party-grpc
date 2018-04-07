@@ -31,6 +31,8 @@ mkdir -p protoc_plugins
 # Jenkins flow (deprecated)
 cp -r $EXTERNAL_GIT_ROOT/platform={windows,linux,macos}/artifacts/protoc_* protoc_plugins || true
 # Kokoro flow
+chmod +x "$EXTERNAL_GIT_ROOT"/input_artifacts/protoc_*/protoc || true
+chmod +x "$EXTERNAL_GIT_ROOT"/input_artifacts/protoc_*/grpc_csharp_plugin || true
 cp -r $EXTERNAL_GIT_ROOT/input_artifacts/protoc_* protoc_plugins || true
 
 dotnet restore Grpc.sln
