@@ -12,7 +12,7 @@ config("grpc_config") {
     ".",
     "include/",
   ]
-  defines = [ "GRPC_USE_PROTO_LITE" ]
+  defines = [ "GRPC_USE_PROTO_LITE", "GPR_SUPPORT_CHANNELS_FROM_FD" ]
 }
 
 config("grpc_warnings") {
